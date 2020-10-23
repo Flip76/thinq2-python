@@ -21,7 +21,7 @@ mqtt_port=1883
 mqtt_topic="thinq"
 mqtt_user=""
 mqtt_pass=""
-mqtt_qos=2
+mqtt_qos=0
 
 LANGUAGE_CODE = os.environ.get("LANGUAGE_CODE", "ko-KR")
 COUNTRY_CODE = os.environ.get("COUNTRY_CODE", "KR")
@@ -72,6 +72,8 @@ signal.signal(signal.SIGINT, shutdown)
 #############################################################################
 
 mqtt_client=paho.Client(mqtt_client_name)
+mqtt_client.username_pw_set(mqtt_user,mqtt_pass)
+
 devices = thinq.mqtt.thinq_client.get_devices()
 
 if len(devices.items) == 0:
@@ -85,8 +87,8 @@ print("Devices:\n")
 
 try:
     mqtt_client.connect(mqtt_host,mqtt_port)    
-    mqtt_client.publish(mqtt_topic + "/user/" + "user_id",thinq.auth.profile.user_id, 0, True)
-    mqtt_client.publish(mqtt_topic + "/user/" + "user_no",thinq.auth.profile.user_no, 0, True)
+    mqtt_client.publish(mqtt_topic + "/user/" + "user_id",thinq.auth.profile.user_id, mqtt_qos, True)
+    mqtt_client.publish(mqtt_topic + "/user/" + "user_no",thinq.auth.profile.user_no, mqtt_qos, True)
 except Exception as error:
     # Will only catch any other exception
     print("Error: " + str(error))
@@ -94,8 +96,8 @@ except Exception as error:
 
 for device in devices.items:
     print("{}: {} (model {})".format(device.device_id, device.alias, device.model_name))
-    mqtt_client.publish(mqtt_topic + "/" + device.device_id + "/device_info/alias",device.alias, 0, True)
-    mqtt_client.publish(mqtt_topic + "/" + device.device_id + "/device_info/model",device.model_name, 0, True)
+    mqtt_client.publish(mqtt_topic + "/" + device.device_id + "/device_info/alias",device.alias, mqtt_qos, True)
+    mqtt_client.publish(mqtt_topic + "/" + device.device_id + "/device_info/model",device.model_name, mqtt_qos, True)
 
 mqtt_client.disconnect()
 
@@ -140,31 +142,31 @@ def on_message(client, userdata, msg):
                 else:
                     try:
                         print("{0} : {1}".format(k, v))
-                        mqtt_client.publish(mqtt_topic + "/" + DeviceID + "/raw_data/" + k,v, 0, True)
+                        mqtt_client.publish(mqtt_topic + "/" + DeviceID + "/raw_data/" + k,v, mqtt_qos, True)
 
                         if str(k).lower() == "state":
-                            mqtt_client.publish(mqtt_topic + "/" + DeviceID + "/state",str(v).lower(), 0, True)
-                            mqtt_client.publish(mqtt_topic + "/" + DeviceID + "/data/state",str(v).lower(), 0, True)
+                            mqtt_client.publish(mqtt_topic + "/" + DeviceID + "/state",str(v).lower(), mqtt_qos, True)
+                            mqtt_client.publish(mqtt_topic + "/" + DeviceID + "/data/state",str(v).lower(), mqtt_qos, True)
 
                         if str(k).lower() == "error" and str(v).lower() == "error_no":
                             mqtt_client.publish(mqtt_topic + "/" + DeviceID + "/error","none")
 
                         if "time" in str(k).lower():
-                            mqtt_client.publish(mqtt_topic + "/" + DeviceID + "/data/" + str(k).lower(),v, 0, True)
+                            mqtt_client.publish(mqtt_topic + "/" + DeviceID + "/data/" + str(k).lower(),v, mqtt_qos, True)
 
                         if str(k).lower() == "online":
-                                mqtt_client.publish(mqtt_topic + "/" + DeviceID + "/data/" + str(k).lower(),str(v).lower(), 0, True)
+                                mqtt_client.publish(mqtt_topic + "/" + DeviceID + "/data/" + str(k).lower(),str(v).lower(), mqtt_qos, True)
 
                         if str(k).lower() == "type":
-                            mqtt_client.publish(mqtt_topic + "/" + DeviceID + "/data/" + str(k).lower(),str(v).lower(), 0, True)
+                            mqtt_client.publish(mqtt_topic + "/" + DeviceID + "/data/" + str(k).lower(),str(v).lower(), mqtt_qos, True)
 
                         if str(k).lower() == "temp":
-                            mqtt_client.publish(mqtt_topic + "/" + DeviceID + "/data/" + str(k).lower(),str(v).lower().replace('temp_',''), 0, True)
+                            mqtt_client.publish(mqtt_topic + "/" + DeviceID + "/data/" + str(k).lower(),str(v).lower().replace('temp_',''), mqtt_qos, True)
 
                         if str(v).lower().endswith("_on"):
-                            mqtt_client.publish(mqtt_topic + "/" + DeviceID + "/data/" + str(k).lower(),"On", 0, True)
+                            mqtt_client.publish(mqtt_topic + "/" + DeviceID + "/data/" + str(k).lower(),"On", mqtt_qos, True)
                         if str(v).lower().endswith("_off"):
-                            mqtt_client.publish(mqtt_topic + "/" + DeviceID + "/data/" + str(k).lower(),"Off", 0, True)
+                            mqtt_client.publish(mqtt_topic + "/" + DeviceID + "/data/" + str(k).lower(),"Off", mqtt_qos, True)
 
                         time.sleep(0.05)
                         #print("{0} : {1}".format(k, v))
